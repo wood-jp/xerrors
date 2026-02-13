@@ -2,6 +2,8 @@
 
 A modern Go library for extending errors with typed contextual data using generics.
 
+*Please note this library will be undergoing change and should probably not be used prior to a proper release (and the removal of this note).*
+
 ## Features
 
 - **Generic error extension**: Attach any data type to an error
