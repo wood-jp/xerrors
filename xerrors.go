@@ -42,10 +42,6 @@ func Extend[T any](data T, err error) error {
 // NOTE: If an error is extended multiple times with the same data type,
 // then only the nearest matching type is returned. See tests for examples.
 func Extract[T any](err error) (T, bool) {
-	var extendedError ExtendedError[T]
-	ok := errors.As(err, &extendedError)
-	return extendedError.Data, ok
-
-	// TODO: Go 1.26: replace with
-	// return errors.AsType[ExtendedError[T]](err)
+	e, ok := errors.AsType[ExtendedError[T]](err)
+	return e.Data, ok
 }
