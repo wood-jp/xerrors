@@ -89,4 +89,4 @@ slog.Error("operation failed", "error", err)
 
 ---
 
-*This package is based on work from [zkr-go-common](https://github.com/zircuit-labs/zkr-go-common-public), licensed under the MIT License.*
+*Originally authored by [wood-jp](https://github.com/wood-jp) at [Zircuit](https://www.zircuit.com/). Based on work from [zkr-go-common](https://github.com/zircuit-labs/zkr-go-common-public), licensed under the MIT License.*
