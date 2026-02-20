@@ -12,6 +12,10 @@ A modern Go library for extending errors with typed contextual data using generi
 - **Structured logging support**: Implements `slog.LogValuer` for clean log output
 - **Zero dependencies**: Uses only the standard library
 
+## Subpackages
+
+- [`errclass`](errclass/README.md) - Error classification by severity level (transient, persistent, panic, etc.)
+
 ## Requirements
 
 - Go 1.26+
@@ -41,7 +45,7 @@ err := xerrors.Extend(rctx, originalErr)
 ```go
 if rctx, ok := xerrors.Extract[RequestContext](err); ok {
     // rctx contains the attached RequestContext
-    fmt.Println(ctx.UserID)
+    fmt.Println(rctx.UserID)
 }
 ```
 
