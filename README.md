@@ -15,6 +15,7 @@ A modern Go library for extending errors with typed contextual data using generi
 ## Subpackages
 
 - [`errclass`](errclass/README.md) - Error classification by severity level (transient, persistent, panic, etc.)
+- [`errcontext`](errcontext/README.md) - Structured logging context for errors using `slog.Attr` key-value pairs
 
 ## Requirements
 
