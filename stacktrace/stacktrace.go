@@ -72,12 +72,11 @@ func (st StackTrace) FlatLogAttrs() []slog.Attr {
 // When skipRuntime is true, frames from the Go runtime (e.g. runtime.main, runtime.panic)
 // and the testing package are omitted from the result.
 func GetStack(skipFrames int, skipRuntime bool) StackTrace {
-	var stackTrace StackTrace
-
 	pc := make([]uintptr, maxFrames)
 	n := runtime.Callers(skipFrames, pc)
 	pc = pc[:n]
 
+	stackTrace := make(StackTrace, 0, n)
 	frames := runtime.CallersFrames(pc)
 	for {
 		frame, more := frames.Next()
