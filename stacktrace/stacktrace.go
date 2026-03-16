@@ -14,11 +14,11 @@ const (
 	testingPrefix = "testing."
 )
 
-// match the filename of the go runtime package
+// match the filename of the Go runtime package
 // eg `/pkg/mod/golang.org/toolchain@v0.0.1-go1.22.4.linux-amd64/src/runtime/panic.go`
 var runtimeRegex = regexp.MustCompile(`go[^/]*/src/runtime/[^.]+\.go`)
 
-// match the filename of the go testing package
+// match the filename of the Go testing package
 var testingRegex = regexp.MustCompile(`go[^/]*/src/testing/[^.]+\.go`)
 
 // Frame represents human-readable information about a single frame in a stack trace.

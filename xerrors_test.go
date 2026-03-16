@@ -121,7 +121,7 @@ func TestExtendedWithSameType(t *testing.T) {
 	}
 
 	// extending an error with the same data type is fine
-	// but extracting it will only give the outer-most (ie last extended) value
+	// but extracting it will only give the outer-most (i.e., the last extended) value
 	e1 := xerrors.Extend(d1, errTest)
 	e2 := xerrors.Extend(d2, e1)
 

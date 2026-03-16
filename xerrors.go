@@ -67,7 +67,7 @@ func (e ExtendedError[T]) flatLogAttrs() []slog.Attr {
 // from every extended-error layer in the chain.
 //
 // This is an opt-in alternative to the default nested [ExtendedError.LogValue]
-// format. The existing LogValue behaviour is unchanged.
+// format. The existing LogValue behavior is unchanged.
 func FlatLogValue(err error) slog.Value {
 	detailAttrs := collectDetails(err)
 	result := []slog.Attr{slog.String("error", err.Error())}
