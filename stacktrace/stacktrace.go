@@ -61,6 +61,12 @@ func (st StackTrace) LogValue() slog.Value {
 	return slog.AnyValue(frames)
 }
 
+// FlatLogAttrs implements [xerrors.LogDetailer], returning the stack trace
+// as a single "stacktrace" attribute for use in [xerrors.FlatLogValue].
+func (st StackTrace) FlatLogAttrs() []slog.Attr {
+	return []slog.Attr{slog.Any("stacktrace", st.LogValue())}
+}
+
 // GetStack captures the current program stack trace and returns it as a [StackTrace].
 // skipFrames controls how many frames to skip: passing 1 makes GetStack itself the first captured frame.
 // When skipRuntime is true, frames from the Go runtime (e.g. runtime.main, runtime.panic)

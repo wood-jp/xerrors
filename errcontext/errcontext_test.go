@@ -174,6 +174,41 @@ func TestAddContextInPlace(t *testing.T) {
 	}
 }
 
+// TestContextFlatLogAttrs validates that Context.FlatLogAttrs() works correctly.
+func TestContextFlatLogAttrs(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		ctx     errcontext.Context
+		wantNil bool
+	}{
+		{"empty context returns nil", errcontext.Context{}, true},
+		{"non-empty context returns context attr", errcontext.Context{"user_id": slog.StringValue("123")}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			attrs := tt.ctx.FlatLogAttrs()
+			if tt.wantNil {
+				if attrs != nil {
+					t.Errorf("FlatLogAttrs() = %v, want nil", attrs)
+				}
+				return
+			}
+			if len(attrs) != 1 {
+				t.Fatalf("FlatLogAttrs() len = %d, want 1", len(attrs))
+			}
+			if attrs[0].Key != "context" {
+				t.Errorf("FlatLogAttrs()[0].Key = %q, want %q", attrs[0].Key, "context")
+			}
+			if attrs[0].Value.Kind() != slog.KindGroup {
+				t.Errorf("FlatLogAttrs()[0].Value kind = %v, want KindGroup", attrs[0].Value.Kind())
+			}
+		})
+	}
+}
+
 // TestLogValue validates that Context.LogValue() works correctly.
 func TestLogValue(t *testing.T) {
 	t.Parallel()

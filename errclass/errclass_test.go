@@ -47,6 +47,36 @@ func TestClassLogValue(t *testing.T) {
 	}
 }
 
+func TestClassFlatLogAttrs(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		class     errclass.Class
+		wantValue string
+	}{
+		{"Unknown", errclass.Unknown, "unknown"},
+		{"Transient", errclass.Transient, "transient"},
+		{"Persistent", errclass.Persistent, "persistent"},
+		{"Panic", errclass.Panic, "panic"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			attrs := tt.class.FlatLogAttrs()
+			if len(attrs) != 1 {
+				t.Fatalf("FlatLogAttrs() len = %d, want 1", len(attrs))
+			}
+			if attrs[0].Key != "class" {
+				t.Errorf("FlatLogAttrs()[0].Key = %q, want %q", attrs[0].Key, "class")
+			}
+			if got := attrs[0].Value.String(); got != tt.wantValue {
+				t.Errorf("FlatLogAttrs()[0].Value = %q, want %q", got, tt.wantValue)
+			}
+		})
+	}
+}
+
 func TestClassConstants(t *testing.T) {
 	t.Parallel()
 	if errclass.Nil != -1 {

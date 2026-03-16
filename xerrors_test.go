@@ -3,10 +3,14 @@ package xerrors_test
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/wood-jp/xerrors"
+	"github.com/wood-jp/xerrors/errclass"
+	"github.com/wood-jp/xerrors/errcontext"
+	"github.com/wood-jp/xerrors/stacktrace"
 )
 
 var errTest = fmt.Errorf("this is a test error")
@@ -138,6 +142,102 @@ func TestExtendedWithSameType(t *testing.T) {
 	}
 	if d1 != f2 {
 		t.Errorf("expected equal values: want %v, got %v", d1, f2)
+	}
+}
+
+// findAttr returns the first attr in attrs whose key equals key, plus a found flag.
+func findAttr(attrs []slog.Attr, key string) (slog.Attr, bool) {
+	for _, a := range attrs {
+		if a.Key == key {
+			return a, true
+		}
+	}
+	return slog.Attr{}, false
+}
+
+func TestFlatLogValue(t *testing.T) {
+	t.Parallel()
+
+	type unknownData struct{ name string }
+
+	tests := []struct {
+		name            string
+		err             error
+		wantDetailKeys  []string // keys expected inside error_detail group
+		wantNoDetail    bool
+	}{
+		{
+			name:         "plain non-extended error",
+			err:          errors.New("plain error"),
+			wantNoDetail: true,
+		},
+		{
+			name:           "unknown data type falls back to data attr",
+			err:            xerrors.Extend(unknownData{"x"}, errors.New("extended")),
+			wantDetailKeys: []string{"data"},
+		},
+		{
+			name:           "errclass and stacktrace composition",
+			err:            stacktrace.Wrap(errclass.WrapAs(errors.New("something went wrong"), errclass.Transient)),
+			wantDetailKeys: []string{"class", "stacktrace"},
+		},
+		{
+			name:           "errcontext adds context group",
+			err:            errcontext.Add(errors.New("ctx error"), slog.String("user_id", "123")),
+			wantDetailKeys: []string{"context"},
+		},
+		{
+			name:           "fmt.Errorf wrapper is transparent",
+			err:            fmt.Errorf("wrapped: %w", errclass.WrapAs(errors.New("inner"), errclass.Persistent)),
+			wantDetailKeys: []string{"class"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			val := xerrors.FlatLogValue(tt.err)
+			if val.Kind() != slog.KindGroup {
+				t.Fatalf("FlatLogValue() kind = %v, want KindGroup", val.Kind())
+			}
+
+			topAttrs := val.Group()
+
+			// The top-level "error" string attr must always be present.
+			errAttr, ok := findAttr(topAttrs, "error")
+			if !ok {
+				t.Fatal("FlatLogValue() missing top-level 'error' attr")
+			}
+			if errAttr.Value.Kind() != slog.KindString {
+				t.Errorf("'error' attr kind = %v, want KindString", errAttr.Value.Kind())
+			}
+			if errAttr.Value.String() != tt.err.Error() {
+				t.Errorf("'error' attr = %q, want %q", errAttr.Value.String(), tt.err.Error())
+			}
+
+			if tt.wantNoDetail {
+				if _, found := findAttr(topAttrs, "error_detail"); found {
+					t.Error("unexpected 'error_detail' attr for plain error")
+				}
+				return
+			}
+
+			detailAttr, found := findAttr(topAttrs, "error_detail")
+			if !found {
+				t.Fatal("missing 'error_detail' attr")
+			}
+			if detailAttr.Value.Kind() != slog.KindGroup {
+				t.Fatalf("'error_detail' kind = %v, want KindGroup", detailAttr.Value.Kind())
+			}
+
+			detailAttrs := detailAttr.Value.Group()
+			for _, key := range tt.wantDetailKeys {
+				if _, found := findAttr(detailAttrs, key); !found {
+					t.Errorf("'error_detail' missing expected key %q", key)
+				}
+			}
+		})
 	}
 }
 
