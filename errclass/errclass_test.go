@@ -56,7 +56,7 @@ func TestClassConstants(t *testing.T) {
 		t.Errorf("Unknown = %d, want 0", errclass.Unknown)
 	}
 	// Severity ordering: higher values are more severe
-	if !(errclass.Nil < errclass.Unknown && errclass.Unknown < errclass.Transient && errclass.Transient < errclass.Persistent && errclass.Persistent < errclass.Panic) {
+	if errclass.Nil >= errclass.Unknown || errclass.Unknown >= errclass.Transient || errclass.Transient >= errclass.Persistent || errclass.Persistent >= errclass.Panic {
 		t.Error("class severity ordering violated")
 	}
 }
