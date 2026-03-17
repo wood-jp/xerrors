@@ -155,7 +155,7 @@ func findAttr(attrs []slog.Attr, key string) (slog.Attr, bool) {
 	return slog.Attr{}, false
 }
 
-func TestFlatLogValue(t *testing.T) {
+func TestLogValue(t *testing.T) {
 	t.Parallel()
 
 	type unknownData struct{ name string }
@@ -197,9 +197,9 @@ func TestFlatLogValue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			val := xerrors.FlatLogValue(tt.err)
+			val := xerrors.Log(tt.err).Value
 			if val.Kind() != slog.KindGroup {
-				t.Fatalf("FlatLogValue() kind = %v, want KindGroup", val.Kind())
+				t.Fatalf("Log().Value kind = %v, want KindGroup", val.Kind())
 			}
 
 			topAttrs := val.Group()
@@ -207,7 +207,7 @@ func TestFlatLogValue(t *testing.T) {
 			// The top-level "error" string attr must always be present.
 			errAttr, ok := findAttr(topAttrs, "error")
 			if !ok {
-				t.Fatal("FlatLogValue() missing top-level 'error' attr")
+				t.Fatal("Log().Value missing top-level 'error' attr")
 			}
 			if errAttr.Value.Kind() != slog.KindString {
 				t.Errorf("'error' attr kind = %v, want KindString", errAttr.Value.Kind())

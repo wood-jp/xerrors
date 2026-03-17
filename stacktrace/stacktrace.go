@@ -35,8 +35,8 @@ type Frame struct {
 type StackTrace []Frame
 
 // LogValue implements [slog.LogValuer].
-// It returns the stack trace as an array of frame objects, each with "func", "line", and "source" keys.
-// An empty StackTrace returns an empty array value.
+// It returns a group containing a single "stacktrace" attr whose value is an
+// array of frame objects, each with "func", "line", and "source" keys.
 //
 // Each frame is represented as map[string]any rather than [slog.GroupValue] because
 // slog handlers only resolve [slog.LogValuer] at the top level of an attribute value —
@@ -45,10 +45,6 @@ type StackTrace []Frame
 // objects ({}). map[string]any is handled correctly by encoding/json and produces the
 // expected key-value output.
 func (st StackTrace) LogValue() slog.Value {
-	if len(st) == 0 {
-		return slog.AnyValue([]any{})
-	}
-
 	frames := make([]any, len(st))
 	for i, frame := range st {
 		frames[i] = map[string]any{
@@ -57,14 +53,7 @@ func (st StackTrace) LogValue() slog.Value {
 			"source": frame.File,
 		}
 	}
-
-	return slog.AnyValue(frames)
-}
-
-// FlatLogAttrs implements [xerrors.LogDetailer], returning the stack trace
-// as a single "stacktrace" attribute for use in [xerrors.FlatLogValue].
-func (st StackTrace) FlatLogAttrs() []slog.Attr {
-	return []slog.Attr{slog.Any("stacktrace", st.LogValue())}
+	return slog.GroupValue(slog.Any("stacktrace", slog.AnyValue(frames)))
 }
 
 // GetStack captures the current program stack trace and returns it as a [StackTrace].

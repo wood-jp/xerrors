@@ -26,8 +26,8 @@ func TestStackTraceLogValue(t *testing.T) {
 		wantKind      slog.Kind
 		wantLogOutput bool
 	}{
-		{"empty", nil, slog.KindAny, false},
-		{"with frames", withFrames, slog.KindAny, true},
+		{"empty", nil, slog.KindGroup, false},
+		{"with frames", withFrames, slog.KindGroup, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -119,32 +119,6 @@ func TestGetStack_HighSkipValue(t *testing.T) {
 	stack := stacktrace.GetStack(1000, true)
 	if len(stack) > 5 {
 		t.Errorf("expected short or empty stack with high skip value, got %d frames", len(stack))
-	}
-}
-
-func TestStackTraceFlatLogAttrs(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		st       stacktrace.StackTrace
-		wantNil  bool
-		wantKey  string
-	}{
-		{"nil stacktrace returns one attr", nil, false, "stacktrace"},
-		{"with frames returns one attr", stacktrace.GetStack(1, true), false, "stacktrace"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			attrs := tt.st.FlatLogAttrs()
-			if len(attrs) != 1 {
-				t.Fatalf("FlatLogAttrs() len = %d, want 1", len(attrs))
-			}
-			if attrs[0].Key != tt.wantKey {
-				t.Errorf("FlatLogAttrs()[0].Key = %q, want %q", attrs[0].Key, tt.wantKey)
-			}
-		})
 	}
 }
 

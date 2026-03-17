@@ -8,12 +8,6 @@ import (
 	"log/slog"
 )
 
-// LogDetailer is implemented by error data types that contribute attributes
-// to the error_detail group in [FlatLogValue].
-type LogDetailer interface {
-	FlatLogAttrs() []slog.Attr
-}
-
 // extendedErrFlat is the unexported interface used by [collectDetails] to walk
 // the error chain and gather flat log attributes from each extended-error layer.
 type extendedErrFlat interface {
@@ -39,13 +33,9 @@ func (e ExtendedError[T]) Unwrap() error {
 	return e.err
 }
 
-// LogValue implements [slog.LogValuer], returning a group containing the
-// underlying error and the attached data.
+// LogValue implements [slog.LogValuer].
 func (e ExtendedError[T]) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.Any("error", e.err),
-		slog.Any("data", e.Data),
-	)
+	return logValue(e)
 }
 
 // innerError implements [extendedErrFlat], returning the wrapped error.
@@ -53,22 +43,21 @@ func (e ExtendedError[T]) innerError() error {
 	return e.err
 }
 
-// flatLogAttrs implements [extendedErrFlat]. If T implements [LogDetailer],
-// it delegates to that; otherwise it falls back to a single "data" attribute.
+// flatLogAttrs implements [extendedErrFlat]. If T implements [slog.LogValuer]
+// and its resolved value is a group, the group attrs are returned directly.
+// Otherwise a single "data" attr wrapping the value is returned.
 func (e ExtendedError[T]) flatLogAttrs() []slog.Attr {
-	if fa, ok := any(e.Data).(LogDetailer); ok {
-		return fa.FlatLogAttrs()
+	val := slog.AnyValue(e.Data)
+	for val.Kind() == slog.KindLogValuer {
+		val = val.LogValuer().LogValue()
+	}
+	if val.Kind() == slog.KindGroup {
+		return val.Group()
 	}
 	return []slog.Attr{slog.Any("data", e.Data)}
 }
 
-// FlatLogValue returns a flat [slog.Value] for err, combining the top-level
-// error message with an optional error_detail group that aggregates attributes
-// from every extended-error layer in the chain.
-//
-// This is an opt-in alternative to the default nested [ExtendedError.LogValue]
-// format. The existing LogValue behavior is unchanged.
-func FlatLogValue(err error) slog.Value {
+func logValue(err error) slog.Value {
 	detailAttrs := collectDetails(err)
 	result := []slog.Attr{slog.String("error", err.Error())}
 	if len(detailAttrs) > 0 {
@@ -122,5 +111,5 @@ func Extract[T any](err error) (T, bool) {
 //
 //	logger.Error("request failed", xerrors.Log(err))
 func Log(err error) slog.Attr {
-	return slog.Any("error", FlatLogValue(err))
+	return slog.Any("error", logValue(err))
 }

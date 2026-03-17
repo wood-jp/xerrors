@@ -43,12 +43,6 @@ func (c Class) String() string {
 	}
 }
 
-// FlatLogAttrs implements [xerrors.LogDetailer], returning the class name
-// as a single "class" attribute for use in [xerrors.FlatLogValue].
-func (c Class) FlatLogAttrs() []slog.Attr {
-	return []slog.Attr{slog.String("class", c.String())}
-}
-
 // LogValue implements [slog.LogValuer], returning the class name as a grouped slog value.
 func (c Class) LogValue() slog.Value {
 	return slog.GroupValue(

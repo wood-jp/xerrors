@@ -24,24 +24,15 @@ func (c Context) Flatten() []slog.Attr {
 	return attrs
 }
 
-// FlatLogAttrs implements [xerrors.LogDetailer], returning the context as a
-// single "context" group attribute for use in [xerrors.FlatLogValue].
-// Returns nil if the context is empty.
-func (c Context) FlatLogAttrs() []slog.Attr {
-	if len(c) == 0 {
-		return nil
-	}
-	return []slog.Attr{{Key: "context", Value: slog.GroupValue(c.Flatten()...)}}
-}
-
 // LogValue implements [slog.LogValuer].
-// It returns the context as a group value with keys in sorted order.
+// An empty context returns an empty group. A non-empty context returns a group
+// containing a single "context" attr whose value is a group of the key-value pairs
+// in sorted key order.
 func (c Context) LogValue() slog.Value {
 	if len(c) == 0 {
-		return slog.Value{}
+		return slog.GroupValue()
 	}
-
-	return slog.GroupValue(c.Flatten()...)
+	return slog.GroupValue(slog.Attr{Key: "context", Value: slog.GroupValue(c.Flatten()...)})
 }
 
 // Add attaches the given [slog.Attr] key-value pairs to err as logging context.

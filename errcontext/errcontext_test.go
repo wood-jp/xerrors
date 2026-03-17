@@ -174,56 +174,21 @@ func TestAddContextInPlace(t *testing.T) {
 	}
 }
 
-// TestContextFlatLogAttrs validates that Context.FlatLogAttrs() works correctly.
-func TestContextFlatLogAttrs(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		ctx     errcontext.Context
-		wantNil bool
-	}{
-		{"empty context returns nil", errcontext.Context{}, true},
-		{"non-empty context returns context attr", errcontext.Context{"user_id": slog.StringValue("123")}, false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			attrs := tt.ctx.FlatLogAttrs()
-			if tt.wantNil {
-				if attrs != nil {
-					t.Errorf("FlatLogAttrs() = %v, want nil", attrs)
-				}
-				return
-			}
-			if len(attrs) != 1 {
-				t.Fatalf("FlatLogAttrs() len = %d, want 1", len(attrs))
-			}
-			if attrs[0].Key != "context" {
-				t.Errorf("FlatLogAttrs()[0].Key = %q, want %q", attrs[0].Key, "context")
-			}
-			if attrs[0].Value.Kind() != slog.KindGroup {
-				t.Errorf("FlatLogAttrs()[0].Value kind = %v, want KindGroup", attrs[0].Value.Kind())
-			}
-		})
-	}
-}
-
 // TestLogValue validates that Context.LogValue() works correctly.
 func TestLogValue(t *testing.T) {
 	t.Parallel()
 
-	// Test empty context
+	// Empty context returns an empty group.
 	emptyContext := errcontext.Context{}
 	v := emptyContext.LogValue()
-	if v.Kind() != slog.KindAny || v.String() != "<nil>" {
-		// slog.Value{} has KindAny with nil underlying
-		if v.String() != "<nil>" && v.Kind() != slog.KindAny {
-			t.Errorf("expected zero Value for empty context, got kind=%v", v.Kind())
-		}
+	if v.Kind() != slog.KindGroup {
+		t.Errorf("empty context: expected KindGroup, got kind=%v", v.Kind())
+	}
+	if len(v.Group()) != 0 {
+		t.Errorf("empty context: expected 0 attrs, got %d", len(v.Group()))
 	}
 
-	// Test context with values
+	// Non-empty context returns a group with a single "context" attr.
 	ctx := errcontext.Context{
 		"key1": slog.StringValue("value1"),
 		"key2": slog.IntValue(42),
@@ -234,13 +199,24 @@ func TestLogValue(t *testing.T) {
 		t.Errorf("expected KindGroup, got %v", logValue.Kind())
 	}
 
-	attrs := logValue.Group()
-	if len(attrs) != 2 {
-		t.Fatalf("expected 2 attrs, got %d", len(attrs))
+	outer := logValue.Group()
+	if len(outer) != 1 {
+		t.Fatalf("expected 1 outer attr (context), got %d", len(outer))
+	}
+	if outer[0].Key != "context" {
+		t.Errorf("outer attr key = %q, want %q", outer[0].Key, "context")
+	}
+	if outer[0].Value.Kind() != slog.KindGroup {
+		t.Fatalf("context value kind = %v, want KindGroup", outer[0].Value.Kind())
+	}
+
+	inner := outer[0].Value.Group()
+	if len(inner) != 2 {
+		t.Fatalf("expected 2 inner attrs, got %d", len(inner))
 	}
 
 	attrMap := make(map[string]string)
-	for _, attr := range attrs {
+	for _, attr := range inner {
 		attrMap[attr.Key] = attr.Value.String()
 	}
 

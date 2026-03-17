@@ -47,9 +47,7 @@ data, ok := xerrors.Extract[MyData](wrapped) // still works
 
 ### Structured logging
 
-`ExtendedError` implements `slog.LogValuer`, so logging a wrapped error works out of the box. The catch is that each layer nests inside the previous one, which gets unwieldy when an error carries a class, a stack trace, and some context all at once.
-
-`xerrors.FlatLogValue(err)` is the alternative. It walks the entire error chain and collects everything into a single flat structure: the error message at the top level, and all the detail attributes merged into one `error_detail` group:
+`ExtendedError` implements `slog.LogValuer`, so logging a wrapped error works out of the box by walking the full chain and collecting everything into one flat structure:
 
 ```json
 {
@@ -62,21 +60,13 @@ data, ok := xerrors.Extract[MyData](wrapped) // still works
 }
 ```
 
-`xerrors.Log(err)` returns that as a ready-to-use `slog.Attr` with the key `"error"`. It's the main entry point for logging errors from this library — just drop it into any slog call:
+`xerrors.Log(err)` returns that as a ready-to-use `slog.Attr` with the key `"error"`. Just drop it into any slog call:
 
 ```go
 logger.Error("request failed", xerrors.Log(err))
 ```
 
-Any data type can participate in flat log output by implementing `LogDetailer`:
-
-```go
-type LogDetailer interface {
-    FlatLogAttrs() []slog.Attr
-}
-```
-
-Return whatever `slog.Attr` values you want from `FlatLogAttrs()` and they'll appear inside `error_detail` alongside everything else. `errclass.Class`, `errcontext.Context`, and `stacktrace.StackTrace` all implement this already. Types that don't fall back to a single `"data"` key.
+Data types contribute to `error_detail` by implementing `slog.LogValuer` and returning a group value. The attrs in that group are merged directly into `error_detail`. Types that don't implement `slog.LogValuer`, or whose `LogValue` doesn't resolve to a group, fall back to a single `"data"` key. See sub-packages for examples.
 
 ### Edge cases
 
@@ -128,7 +118,7 @@ err = errclass.WrapAs(err, errclass.Persistent, errclass.WithOnlyUnknown())
 err = errclass.WrapAs(err, errclass.Panic, errclass.WithOnlyMoreSevere())
 ```
 
-`Class` implements `LogDetailer`, so it shows up as `"class": "transient"` in flat log output.
+`Class` implements `slog.LogValuer`. It shows up as `"class": "transient"` in flat log output.
 
 `errors.Join` is not supported. Class information on individual errors may be lost when combining into a joined error.
 
@@ -157,7 +147,7 @@ if ctx != nil {
 }
 ```
 
-`Context` implements `LogDetailer`, so attached keys appear under `"context"` in flat log output.
+`Context` implements `slog.LogValuer`. Attached keys appear under `"context"` in flat log output.
 
 `Add` with nil returns nil. `Add` with no attrs is a no-op. Duplicate keys use last-write-wins. `errors.Join` is not supported.
 
@@ -175,7 +165,7 @@ Captures a stack trace where `Wrap` is called and attaches it to the error. If t
 err = stacktrace.Wrap(err)
 ```
 
-Most likely, stack traces are only used in logging. `StackTrace` implements `LogDetailer`, so it appears as a `"stacktrace"` array in flat log output.
+Most likely, stack traces are only used in logging. `StackTrace` implements `slog.LogValuer`, and appears as a `"stacktrace"` array in flat log output.
 
 However, if you wish to directly get at the stack trace data, you can pull the trace back out with `Extract`:
 
@@ -185,11 +175,13 @@ if st := stacktrace.Extract(err); st != nil {
 }
 ```
 
-If you don't want to capture any stack traces, just disable them globally:
+Alternatively, if you don't want to capture any stack traces but want to keep the code around, just disable them globally:
 
 ```go
 stacktrace.Disabled.Store(true)
 ```
+
+This results in all `Wrap` calls becoming no-ops.
 
 ## Attribution
 
