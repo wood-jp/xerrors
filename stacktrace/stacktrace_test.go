@@ -130,7 +130,7 @@ func TestStackTraceTypes(t *testing.T) {
 	if st == nil {
 		t.Fatal("expected stacktrace")
 	}
-	if got := reflect.TypeOf(st).String(); got != "stacktrace.StackTrace" {
+	if got := reflect.TypeFor[stacktrace.StackTrace]().String(); got != "stacktrace.StackTrace" {
 		t.Errorf("unexpected type: %s", got)
 	}
 	if len(st) > 0 {

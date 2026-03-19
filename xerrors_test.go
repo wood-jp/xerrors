@@ -161,10 +161,10 @@ func TestLogValue(t *testing.T) {
 	type unknownData struct{ name string }
 
 	tests := []struct {
-		name            string
-		err             error
-		wantDetailKeys  []string // keys expected inside error_detail group
-		wantNoDetail    bool
+		name           string
+		err            error
+		wantDetailKeys []string // keys expected inside error_detail group
+		wantNoDetail   bool
 	}{
 		{
 			name:         "plain non-extended error",

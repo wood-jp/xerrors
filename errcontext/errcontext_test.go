@@ -233,7 +233,7 @@ func TestAddEmptyContext(t *testing.T) {
 	t.Parallel()
 
 	result := errcontext.Add(errTest)
-	if result != errTest {
+	if result != errTest { //nolint:errorlint // intentional pointer identity check: Add with no attrs must return the exact same error instance
 		t.Error("expected same error returned when no context provided")
 	}
 	if errcontext.Get(result) != nil {

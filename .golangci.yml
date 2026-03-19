@@ -1,0 +1,35 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - dupword
+    - errorlint
+    - exhaustive
+    - forcetypeassert
+    - godot
+    - gocritic
+    - misspell
+    - nilnil
+    - nolintlint
+    - paralleltest
+    - revive
+    - testpackage
+    - tparallel
+  disable:
+    - wrapcheck
+    - gochecknoglobals
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: true
+    nolintlint:
+      require-explanation: true
+      allow-unused: false
+    revive:
+      rules:
+        - name: exported
+          arguments:
+            - "checkPrivateReceivers"
+            - "sayRepetitiveInsteadOfStutters"
+    godot:
+      scope: declarations
