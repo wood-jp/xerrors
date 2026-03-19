@@ -1,9 +1,11 @@
 package xerrors_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
@@ -292,5 +294,27 @@ func TestExtendedWithMultipleTypedefs(t *testing.T) {
 	_, ok = xerrors.Extract[ClassB](e3)
 	if ok {
 		t.Errorf("expected false: got %v", ok)
+	}
+}
+
+func TestExtendedErrorLogValue(t *testing.T) {
+	t.Parallel()
+
+	type data struct{ N int }
+	err := xerrors.Extend(data{N: 42}, errors.New("oops"))
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, nil))
+	logger.Info("test", slog.Any("error", err))
+
+	out := buf.String()
+	if !strings.Contains(out, `"error"`) {
+		t.Errorf("expected 'error' key in output: %s", out)
+	}
+	if !strings.Contains(out, "oops") {
+		t.Errorf("expected error message in output: %s", out)
+	}
+	if !strings.Contains(out, "42") {
+		t.Errorf("expected data value in output: %s", out)
 	}
 }

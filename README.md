@@ -1,6 +1,10 @@
 # xerrors
 
-Attach typed data to Go errors. Pull it back out later by type. Works with the standard error chain.
+<!-- badges -->
+[![Coverage Status](https://coveralls.io/repos/github/wood-jp/xerrors/badge.svg?branch=main)](https://coveralls.io/github/wood-jp/xerrors?branch=main)
+<!-- /badges -->
+
+Wrap any error with any data stucture using generics; automatically log that data, or extract directly it later.
 
 > This library is in active development. Don't use it in production until this note is gone.
 
