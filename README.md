@@ -12,6 +12,7 @@
 
 Wrap any error with any data stucture using generics; automatically log that data, or extract directly it later. Loggable stacktraces out of the box.
 
+- [Stability](#stability)
 - [Installation](#installation)
 - [Core package](#core-package)
 - [Subpackages](#subpackages)
@@ -22,6 +23,10 @@ Wrap any error with any data stucture using generics; automatically log that dat
 - [Contributing](#contributing)
 - [Security](#security)
 - [Attribution](#attribution)
+
+## Stability
+
+v1.x releases make no breaking changes to exported APIs. New functionality may be added in minor releases; patches are bug fixes, or administrative work only.
 
 ## Installation
 
@@ -243,7 +248,7 @@ just bench
 
 Results on an Intel Core Ultra 7 155H (Go 1.26.1, linux/amd64, `-count=3`):
 
-```
+```text
 goos: linux
 goarch: amd64
 cpu: Intel(R) Core(TM) Ultra 7 155H
@@ -267,7 +272,7 @@ BenchmarkAdd_Existing_Deep-22       	35166369	        36 ns/op	       0 B/op	   
 BenchmarkFlatten-22                 	 2332621	       511 ns/op	     512 B/op	   8 allocs/op
 ```
 
-As one might expect, call-depth (for stacktraces) and error-chain depth impact the actual costs. The "Deep" benchmarks here only have depth/length of 5 for illustrative purposes.
+As one might expect, call-depth (for stacktraces) and error-chain depth impact the actual costs. The "deep" benchmarks here only have depth/length of 5 for illustrative purposes.
 
 Actually obtaining a stack trace is expensive, but only happens once in the call-chain. Re-wrapping an already-traced error is a no-op (aside walking the error chain).
 
@@ -283,4 +288,4 @@ See [SECURITY.md](SECURITY.md).
 
 ## Attribution
 
-*Originally written by [wood-jp](https://github.com/wood-jp) at [Zircuit](https://www.zircuit.com/). Based on [zkr-go-common-public](https://github.com/zircuit-labs/zkr-go-common-public), MIT license.*
+*This library is a simplified fork of one written by [wood-jp](https://github.com/wood-jp) at [Zircuit](https://www.zircuit.com/). The original code is available here: [zkr-go-common-public/xerrors](https://github.com/zircuit-labs/zkr-go-common-public/tree/main/xerrors)*
