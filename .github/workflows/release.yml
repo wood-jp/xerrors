@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write # to create tags and releases
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate running on default branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DEFAULT_BRANCH=$(gh repo view ${{ github.repository }} --json defaultBranchRef --jq '.defaultBranchRef.name')
+          CURRENT_BRANCH="${GITHUB_REF#refs/heads/}"
+          if [ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ]; then
+            echo "error: Release workflow must run on default branch ($DEFAULT_BRANCH), not $CURRENT_BRANCH."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Execute Release
+        id: release
+        uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          force-bump-patch-version: false
+          changelog-generator-opt: "emojis=true"
+          # major_release_rules=breaking is not an allowed commit type — prevents automated major releases
+          custom-arguments: --commit-analyzer-opt patch_release_rules=fix,refactor,test,build,chore,docs --commit-analyzer-opt minor_release_rules=feat --commit-analyzer-opt major_release_rules=breaking
+
+      - name: Write summary
+        if: ${{ steps.release.outputs.version != '' }}
+        run: |
+          {
+            echo "## Release Created"
+            echo ""
+            echo "**Tag:** \`${{ steps.release.outputs.version }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,7 +1,10 @@
 # xerrors
 
 <!-- badges -->
+[![CI](https://github.com/wood-jp/xerrors/actions/workflows/ci.yml/badge.svg)](https://github.com/wood-jp/xerrors/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/wood-jp/xerrors/badge.svg?branch=main)](https://coveralls.io/github/wood-jp/xerrors?branch=main)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/wood-jp/xerrors)](https://github.com/wood-jp/xerrors/releases)
 <!-- /badges -->
 
 Wrap any error with any data stucture using generics; automatically log that data, or extract directly it later.
