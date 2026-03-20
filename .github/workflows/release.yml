@@ -2,6 +2,11 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Dry run: calculate version without creating tag or release"
+        type: boolean
+        default: false
 
 permissions:
   contents: write # to create tags and releases
@@ -31,17 +36,36 @@ jobs:
         id: release
         uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.RELEASE_PAT }}
           force-bump-patch-version: false
           changelog-generator-opt: "emojis=true"
+          # --allow-initial-development-versions keeps major pinned at 0 until explicitly ready for 1.0
           # major_release_rules=breaking is not an allowed commit type — prevents automated major releases
-          custom-arguments: --commit-analyzer-opt patch_release_rules=fix,refactor,test,build,chore,docs --commit-analyzer-opt minor_release_rules=feat --commit-analyzer-opt major_release_rules=breaking
+          custom-arguments: >-
+            ${{ inputs.dry-run && '--dry' || '' }}
+            --allow-initial-development-versions
+            --commit-analyzer-opt patch_release_rules=fix,refactor,test,build,chore,docs
+            --commit-analyzer-opt minor_release_rules=feat
+            --commit-analyzer-opt major_release_rules=breaking
+
+      - name: Write summary (dry run)
+        if: ${{ inputs.dry-run && steps.release.outputs.version != '' }}
+        run: |
+          {
+            echo "## Dry Run — Release Preview"
+            echo ""
+            echo "**Would create tag:** \`v${{ steps.release.outputs.version }}\`"
+            echo ""
+            echo "### Release Notes"
+            echo ""
+            cat .generated-go-semantic-release-changelog.md
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Write summary
-        if: ${{ steps.release.outputs.version != '' }}
+        if: ${{ !inputs.dry-run && steps.release.outputs.version != '' }}
         run: |
           {
             echo "## Release Created"
             echo ""
-            echo "**Tag:** \`${{ steps.release.outputs.version }}\`"
+            echo "**Tag:** [v${{ steps.release.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.release.outputs.version }})"
           } >> "$GITHUB_STEP_SUMMARY"
