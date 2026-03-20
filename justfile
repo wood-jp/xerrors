@@ -3,6 +3,10 @@ test:
     go install github.com/mfridman/tparse@latest
     go test -race -json -shuffle=on -covermode=atomic ./... | tparse -progress
 
+# Run benchmarks with memory allocation stats
+bench:
+    go test -bench=. -benchmem -count=3 ./...
+
 # Run golangci-lint
 lint:
     go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
