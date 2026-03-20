@@ -1,4 +1,7 @@
-// Package stacktrace uses the go runtime to capture stack trace data.
+// Package stacktrace captures and formats call stack information using the Go runtime.
+// It provides [GetStack] to capture the current program stack, and [Wrap] / [Extract]
+// to attach a [StackTrace] to an error. [StackTrace] implements [slog.LogValuer] for
+// structured logging integration.
 package stacktrace
 
 import (

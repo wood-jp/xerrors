@@ -1,6 +1,7 @@
 # xerrors
 
 <!-- badges -->
+[![Go Reference](https://pkg.go.dev/badge/github.com/wood-jp/xerrors.svg)](https://pkg.go.dev/github.com/wood-jp/xerrors)
 [![CI](https://github.com/wood-jp/xerrors/actions/workflows/ci.yml/badge.svg)](https://github.com/wood-jp/xerrors/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/wood-jp/xerrors/badge.svg?branch=main)](https://coveralls.io/github/wood-jp/xerrors?branch=main)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -168,11 +169,42 @@ github.com/wood-jp/xerrors/stacktrace
 
 Captures a stack trace where `Wrap` is called and attaches it to the error. If the error already has a trace, `Wrap` is a no-op.
 
+`StackTrace` implements `slog.LogValuer`, and appears as a `"stacktrace"` array in flat log output. For example:
+
 ```go
-err = stacktrace.Wrap(err)
+var errTest = errors.New("something went wrong")
+
+func c() error {
+    return stacktrace.Wrap(errclass.WrapAs(errTest, errclass.Transient))
+}
+
+func b() error { return c() }
+func a() error { return b() }
+
+err := a()
+logger.Error("request failed", xerrors.Log(err))
 ```
 
-Most likely, stack traces are only used in logging. `StackTrace` implements `slog.LogValuer`, and appears as a `"stacktrace"` array in flat log output.
+Outputs a log similar to:
+
+```json
+{
+  "level": "ERROR",
+  "msg": "request failed",
+  "error": {
+    "error": "something went wrong",
+    "error_detail": {
+      "class": "transient",
+      "stacktrace": [
+        {"func": "main.c", "line": 16, "source": "main.go"},
+        {"func": "main.b", "line": 20, "source": "main.go"},
+        {"func": "main.a", "line": 24, "source": "main.go"},
+        {"func": "main.main", "line": 31, "source": "main.go"}
+      ]
+    }
+  }
+}
+```
 
 However, if you wish to directly get at the stack trace data, you can pull the trace back out with `Extract`:
 
@@ -192,4 +224,4 @@ This results in all `Wrap` calls becoming no-ops.
 
 ## Attribution
 
-*Originally written by [wood-jp](https://github.com/wood-jp) at [Zircuit](https://www.zircuit.com/). Based on [zkr-go-common](https://github.com/zircuit-labs/zkr-go-common-public), MIT license.*
+*Originally written by [wood-jp](https://github.com/wood-jp) at [Zircuit](https://www.zircuit.com/). Based on [zkr-go-common-public](https://github.com/zircuit-labs/zkr-go-common-public), MIT license.*
