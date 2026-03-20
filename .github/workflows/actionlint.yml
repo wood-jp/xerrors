@@ -2,8 +2,6 @@ name: Actionlint
 
 on:
   pull_request:
-    paths:
-      - ".github/**"
   workflow_dispatch:
 
 concurrency:
