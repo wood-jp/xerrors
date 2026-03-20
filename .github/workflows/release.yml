@@ -47,7 +47,6 @@ jobs:
           # major_release_rules=breaking is not an allowed commit type — prevents automated major releases
           custom-arguments: >-
             ${{ inputs.dry-run && '--dry' || '' }}
-            --allow-initial-development-versions
             --commit-analyzer-opt patch_release_rules=fix,refactor,test,build,chore,docs
             --commit-analyzer-opt minor_release_rules=feat
             --commit-analyzer-opt major_release_rules=breaking
