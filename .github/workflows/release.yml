@@ -34,6 +34,10 @@ jobs:
 
       - name: Execute Release
         id: release
+        # In dry-run mode, go-semantic-release exits without writing .version, which
+        # causes the action wrapper to error with ENOENT. continue-on-error lets the
+        # workflow proceed so subsequent summary steps can still run.
+        continue-on-error: ${{ inputs.dry-run == true }}
         uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
         with:
           github-token: ${{ secrets.RELEASE_PAT }}
@@ -49,16 +53,20 @@ jobs:
             --commit-analyzer-opt major_release_rules=breaking
 
       - name: Write summary (dry run)
-        if: ${{ inputs.dry-run && steps.release.outputs.version != '' }}
+        if: ${{ inputs.dry-run }}
         run: |
           {
             echo "## Dry Run — Release Preview"
             echo ""
-            echo "**Would create tag:** \`v${{ steps.release.outputs.version }}\`"
+            echo "See job logs above for the calculated version."
             echo ""
-            echo "### Release Notes"
-            echo ""
-            cat .generated-go-semantic-release-changelog.md
+            if [ -f .generated-go-semantic-release-changelog.md ]; then
+              echo "### Release Notes"
+              echo ""
+              cat .generated-go-semantic-release-changelog.md
+            else
+              echo "_No release would be created (no releasable commits since last release)._"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Write summary
