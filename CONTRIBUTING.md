@@ -22,12 +22,14 @@ No other setup is required. This module has zero external runtime dependencies.
 
 | Command       | What it does                                              |
 |---------------|-----------------------------------------------------------|
-| `just test`   | Run tests with race detector, shuffle, and coverage       |
-| `just lint`   | Run golangci-lint                                         |
-| `just tidy`   | `go mod tidy`, `go fix`, `go fmt`                         |
-| `just vuln`   | Run govulncheck                                           |
+| `just test`       | Run tests with race detector, shuffle, and coverage   |
+| `just lint`       | Run golangci-lint                                     |
+| `just tidy`       | `go mod tidy`, `go fix`, `go fmt`                     |
+| `just vuln`       | Run govulncheck                                       |
+| `just actionlint` | Lint GitHub Actions workflow files                    |
 
 CI runs `go vet`, `govulncheck`, `go test -race`, and `golangci-lint` on every PR.
+Changes to `.github/workflows/` also trigger `actionlint` in CI — run `just actionlint` locally before pushing.
 
 ## Making Changes
 
