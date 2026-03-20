@@ -13,10 +13,9 @@ Contributions are welcome. Please open an issue before starting significant work
 ```bash
 git clone https://github.com/wood-jp/xerrors
 cd xerrors
-go mod download
 ```
 
-No other setup is required. This module has zero external runtime dependencies.
+No other setup is required. This module has zero external runtime dependencies - let's keep it that way.
 
 ## Common Tasks
 

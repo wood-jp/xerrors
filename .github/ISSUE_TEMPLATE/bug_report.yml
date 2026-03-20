@@ -45,6 +45,6 @@ body:
     id: module-version
     attributes:
       label: xerrors version
-      placeholder: "v0.3.0 or commit SHA"
+      placeholder: "vX.Y.Z or commit SHA"
     validations:
       required: true
