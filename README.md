@@ -1,18 +1,27 @@
 # xerrors
 
 <!-- badges -->
-[![Go Reference](https://pkg.go.dev/badge/github.com/wood-jp/xerrors.svg)](https://pkg.go.dev/github.com/wood-jp/xerrors)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/wood-jp/xerrors)](https://pkg.go.dev/github.com/wood-jp/xerrors)
 [![CI](https://github.com/wood-jp/xerrors/actions/workflows/ci.yml/badge.svg)](https://github.com/wood-jp/xerrors/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/wood-jp/xerrors/badge.svg?branch=main)](https://coveralls.io/github/wood-jp/xerrors?branch=main)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/wood-jp/xerrors)](https://github.com/wood-jp/xerrors/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/wood-jp/xerrors)](https://goreportcard.com/report/github.com/wood-jp/xerrors)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/wood-jp/xerrors)](https://pkg.go.dev/github.com/wood-jp/xerrors)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/wood-jp/xerrors.svg)](https://pkg.go.dev/github.com/wood-jp/xerrors)
 <!-- /badges -->
 
-Wrap any error with any data stucture using generics; automatically log that data, or extract directly it later.
+Wrap any error with any data stucture using generics; automatically log that data, or extract directly it later. Loggable stacktraces out of the box.
 
-> This library is in active development. Don't use it in production until this note is gone.
+- [Installation](#installation)
+- [Core package](#core-package)
+- [Subpackages](#subpackages)
+  - [errclass](#errclass)
+  - [errcontext](#errcontext)
+  - [stacktrace](#stacktrace)
+- [Performance](#performance)
+- [Contributing](#contributing)
+- [Security](#security)
+- [Attribution](#attribution)
 
 ## Installation
 
@@ -223,6 +232,54 @@ stacktrace.Disabled.Store(true)
 ```
 
 This results in all `Wrap` calls becoming no-ops.
+
+## Performance
+
+Benchmarks cover the three operations users care about: stack capture, generic wrapping/extraction, and context attachment. Run them yourself with:
+
+```bash
+just bench
+```
+
+Results on an Intel Core Ultra 7 155H (Go 1.26.1, linux/amd64, `-count=3`):
+
+```
+goos: linux
+goarch: amd64
+cpu: Intel(R) Core(TM) Ultra 7 155H
+
+pkg: github.com/wood-jp/xerrors/stacktrace
+BenchmarkWrap_New-22                	  804999	      1314 ns/op	     880 B/op	   5 allocs/op
+BenchmarkWrap_Existing-22           	64795417	        19 ns/op	       0 B/op	   0 allocs/op
+BenchmarkWrap_New_Deep-22           	  497211	      2772 ns/op	    1104 B/op	   5 allocs/op
+BenchmarkWrap_Existing_Deep-22      	33198662	        31 ns/op	       0 B/op	   0 allocs/op
+
+pkg: github.com/wood-jp/xerrors
+BenchmarkExtend-22                  	34270780	        32 ns/op	      48 B/op	   1 allocs/op
+BenchmarkExtract_Shallow-22         	89609863	        11 ns/op	       0 B/op	   0 allocs/op
+BenchmarkExtract_Deep-22            	28955666	        42 ns/op	       0 B/op	   0 allocs/op
+BenchmarkLog-22                     	 1398642	       857 ns/op	     960 B/op	  20 allocs/op
+
+pkg: github.com/wood-jp/xerrors/errcontext
+BenchmarkAdd_New-22                 	 5845732	       207 ns/op	     440 B/op	   4 allocs/op
+BenchmarkAdd_Existing-22            	48651021	        22 ns/op	       0 B/op	   0 allocs/op
+BenchmarkAdd_Existing_Deep-22       	35166369	        36 ns/op	       0 B/op	   0 allocs/op
+BenchmarkFlatten-22                 	 2332621	       511 ns/op	     512 B/op	   8 allocs/op
+```
+
+As one might expect, call-depth (for stacktraces) and error-chain depth impact the actual costs. The "Deep" benchmarks here only have depth/length of 5 for illustrative purposes.
+
+Actually obtaining a stack trace is expensive, but only happens once in the call-chain. Re-wrapping an already-traced error is a no-op (aside walking the error chain).
+
+Adding error context is also very cheap after the first. It also has an error-chain depth traversal cost if adding context at different call sites.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md).
 
 ## Attribution
 
