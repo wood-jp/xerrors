@@ -15,7 +15,7 @@ git clone https://github.com/wood-jp/xerrors
 cd xerrors
 ```
 
-No other setup is required. This module has zero external runtime dependencies - let's keep it that way.
+No other setup is required.
 
 ## Common Tasks
 
