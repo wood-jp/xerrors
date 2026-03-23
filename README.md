@@ -19,6 +19,7 @@ Wrap any error with any data stucture using generics; automatically log that dat
   - [errclass](#errclass)
   - [errcontext](#errcontext)
   - [stacktrace](#stacktrace)
+  - [calm](#calm)
 - [Performance](#performance)
 - [Contributing](#contributing)
 - [Security](#security)
@@ -237,6 +238,33 @@ stacktrace.Disabled.Store(true)
 ```
 
 This results in all `Wrap` calls becoming no-ops.
+
+### calm
+
+```text
+github.com/wood-jp/xerrors/calm
+```
+
+Wraps a function call so that any panic is recovered and returned as an error with a
+stack trace and an [`errclass.Panic`](#errclass) classification.
+
+```go
+err := calm.Unpanic(func() error {
+    // code that might panic
+    return doSomething()
+})
+if errclass.GetClass(err) == errclass.Panic {
+    // handle recovered panic
+}
+```
+
+`Unpanic` returns nil if f returns nil. If f panics, the panic value is wrapped with
+`fmt.Errorf("panic: %v", r)`, given a stack trace starting at the panic site, and classified as `errclass.Panic`.
+
+If the `panic` was called with an error argument, the panic value is wrapped with `fmt.Errorf("panic: %v", r)`, preserving the original error.
+
+> **WARNING:** It is not possible to recover from a panic in a goroutine spawned by
+> `f()`. Goroutines created inside `f` must guard themselves against panics.
 
 ## Performance
 
