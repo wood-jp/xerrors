@@ -19,6 +19,8 @@ Wrap any error with any data stucture using generics; automatically log that dat
   - [errclass](#errclass)
   - [errcontext](#errcontext)
   - [stacktrace](#stacktrace)
+  - [calm](#calm)
+  - [errgroup](#errgroup)
 - [Performance](#performance)
 - [Contributing](#contributing)
 - [Security](#security)
@@ -237,6 +239,66 @@ stacktrace.Disabled.Store(true)
 ```
 
 This results in all `Wrap` calls becoming no-ops.
+
+### calm
+
+```text
+github.com/wood-jp/xerrors/calm
+```
+
+Wraps a function call so that any panic is recovered and returned as an error with a
+stack trace and an [`errclass.Panic`](#errclass) classification.
+
+```go
+err := calm.Unpanic(func() error {
+    // code that might panic
+    return doSomething()
+})
+if errclass.GetClass(err) == errclass.Panic {
+    // handle recovered panic
+}
+```
+
+`Unpanic` returns nil if f returns nil. If f panics, the panic value is wrapped with
+`fmt.Errorf("panic: %v", r)`, given a stack trace starting at the panic site, and classified as `errclass.Panic`.
+
+If the `panic` was called with an error argument, the panic value is wrapped with `fmt.Errorf("panic: %v", r)`, preserving the original error.
+
+> **WARNING:** It is not possible to recover from a panic in a goroutine spawned by
+> `f()`. Goroutines created inside `f` must guard themselves against panics.
+
+### errgroup
+
+```text
+github.com/wood-jp/xerrors/errgroup
+```
+
+Wraps [`golang.org/x/sync/errgroup`](https://pkg.go.dev/golang.org/x/sync/errgroup) so
+that panics inside goroutines are recovered and returned as errors rather than crashing the
+program. Uses [`calm.Unpanic`](#calm) internally, so recovered panics carry a stack trace
+and an [`errclass.Panic`](#errclass) classification.
+
+```go
+g := errgroup.New()
+g.Go(func() error {
+    return doSomething() // panics are caught and returned as errors
+})
+if err := g.Wait(); err != nil {
+    if errclass.GetClass(err) == errclass.Panic {
+        // handle recovered panic
+    }
+}
+```
+
+`WithContext` works the same as upstream: the derived context is cancelled the first time a
+goroutine returns a non-nil error (including a recovered panic), or when `Wait` returns.
+
+`SetLimit` and `TryGo` are also available and behave identically to the upstream package,
+with the same panic-recovery guarantee.
+
+> **WARNING:** Panics in goroutines spawned _inside_ `f()` are not recovered. Goroutines
+> created within `f` must guard themselves — use [`calm.Unpanic`](#calm) or call
+> `g.Go` again from within `f`.
 
 ## Performance
 
