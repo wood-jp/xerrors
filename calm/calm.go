@@ -24,13 +24,14 @@ func Unpanic(f func() error) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// panic can be called with anything. If called with an error, recover the actual error.
-			var panicErr error
 			if e, ok := r.(error); ok {
-				panicErr = fmt.Errorf("panic: %w", e)
+				err = fmt.Errorf("panic: %w", e)
 			} else {
-				panicErr = fmt.Errorf("panic: %v", r)
+				err = fmt.Errorf("panic: %v", r)
 			}
-			err = xerrors.Extend(stacktrace.GetStack(panicStackDepth, true), panicErr)
+			if _, ok := xerrors.Extract[stacktrace.StackTrace](err); !ok {
+				err = xerrors.Extend(stacktrace.GetStack(panicStackDepth, true), err)
+			}
 			err = errclass.WrapAs(err, errclass.Panic)
 		}
 	}()
