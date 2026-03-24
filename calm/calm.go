@@ -30,8 +30,8 @@ func Unpanic(f func() error) (err error) {
 			} else {
 				panicErr = fmt.Errorf("panic: %v", r)
 			}
-			r := xerrors.Extend(stacktrace.GetStack(panicStackDepth, true), panicErr)
-			err = errclass.WrapAs(r, errclass.Panic)
+			err = xerrors.Extend(stacktrace.GetStack(panicStackDepth, true), panicErr)
+			err = errclass.WrapAs(err, errclass.Panic)
 		}
 	}()
 
