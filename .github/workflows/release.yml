@@ -27,6 +27,13 @@ jobs:
             exit 1
           fi
 
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -40,7 +47,7 @@ jobs:
         continue-on-error: ${{ inputs.dry-run == true }}
         uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
         with:
-          github-token: ${{ secrets.RELEASE_PAT }}
+          github-token: ${{ steps.app-token.outputs.token }}
           force-bump-patch-version: false
           changelog-generator-opt: "emojis=true"
           # --allow-initial-development-versions keeps major pinned at 0 until explicitly ready for 1.0
