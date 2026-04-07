@@ -27,3 +27,9 @@ tidy:
 actionlint:
     go install github.com/rhysd/actionlint/cmd/actionlint@latest
     actionlint
+    @if command -v zizmor > /dev/null 2>&1; then \
+        zizmor .github/workflows/; \
+    else \
+        echo "zizmor is not installed. Install it to enable Actions security linting:"; \
+        echo "  https://docs.zizmor.sh/installation/"; \
+    fi
