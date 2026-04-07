@@ -15,6 +15,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    environment: release
     steps:
       - name: Validate running on default branch
         env:
