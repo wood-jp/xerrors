@@ -32,7 +32,7 @@ v1.x releases make no breaking changes to exported APIs. New functionality may b
 
 ## Installation
 
-Go 1.26.1 or later.
+Go 1.26.4 or later.
 
 ```bash
 go get github.com/wood-jp/xerrors
