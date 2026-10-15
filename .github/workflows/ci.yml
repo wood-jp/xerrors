@@ -35,7 +35,8 @@ jobs:
           # Any Go code or files that directly relate to testing Go code (like this one)
           files: |
             **/*.go
-            go.mod
+            **/go.mod
+            **/go.sum
             .golangci.yml
             .github/workflows/ci.yml
 
@@ -44,6 +45,15 @@ jobs:
     needs: changed-files
     timeout-minutes: 10
     runs-on: ubuntu-latest
+    name: ci (${{ matrix.module }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each entry is a directory containing a go.mod.
+        module: [".", "xzap"]
+    defaults:
+      run:
+        working-directory: ${{ matrix.module }}
 
     steps:
 
@@ -55,8 +65,25 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
-          go-version-file: go.mod
+          go-version-file: ${{ matrix.module }}/go.mod
           cache: true
+          cache-dependency-path: ${{ matrix.module }}/go.sum
+
+      - name: Use local xerrors in nested modules
+        if: ${{ matrix.module != '.' }}
+        # Nested modules pin a published xerrors release in go.mod. Test them
+        # against this checkout instead, so core changes can't break them unnoticed.
+        working-directory: .
+        env:
+          MODULE: ${{ matrix.module }}
+        run: go work init . "$MODULE"
+
+      - name: Reject replace directives
+        run: |
+          if grep -Eq '^\s*replace\b' go.mod; then
+            echo "error: go.mod must not contain replace directives"
+            exit 1
+          fi
 
       - name: vet
         run: go vet ./...
@@ -71,8 +98,11 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@9fae48acfc02a90574d7c304a1758ef9895495fa # v7.0.1
+        with:
+          working-directory: ${{ matrix.module }}
 
       - name: coveralls
+        if: ${{ matrix.module == '.' }}
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

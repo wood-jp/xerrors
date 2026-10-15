@@ -34,12 +34,22 @@ jobs:
         with:
           app-id: ${{ secrets.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write # to create tags and releases
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Validate nested modules
+        run: |
+          for mod in xzap; do
+            if grep -Eq '^\s*replace\b' "$mod/go.mod"; then
+              echo "error: $mod/go.mod must not contain replace directives"
+              exit 1
+            fi
+          done
 
       - name: Execute Release
         id: release
@@ -59,6 +69,28 @@ jobs:
             --commit-analyzer-opt patch_release_rules=fix,refactor,test,build,chore,docs
             --commit-analyzer-opt minor_release_rules=feat
             --commit-analyzer-opt major_release_rules=breaking
+
+      # Nested modules are versioned in lockstep with the root module: every root
+      # release vX.Y.Z also gets a <module>/vX.Y.Z tag on the same commit, which is
+      # what the Go module proxy requires to resolve a nested module's version.
+      - name: Tag nested modules
+        if: ${{ !inputs.dry-run && steps.release.outputs.version != '' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          SHA=$(gh api "repos/${REPOSITORY}/commits/v${RELEASE_VERSION}" --jq .sha)
+          for mod in xzap; do
+            TAG="${mod}/v${RELEASE_VERSION}"
+            if gh api "repos/${REPOSITORY}/git/ref/tags/${TAG}" > /dev/null 2>&1; then
+              echo "${TAG} already exists, skipping"
+              continue
+            fi
+            gh api "repos/${REPOSITORY}/git/refs" \
+              -f "ref=refs/tags/${TAG}" -f "sha=${SHA}" > /dev/null
+            echo "created ${TAG} at ${SHA}"
+          done
 
       - name: Write summary (dry run)
         if: ${{ inputs.dry-run }}
@@ -87,4 +119,6 @@ jobs:
             echo "## Release Created"
             echo ""
             echo "**Tag:** [v${RELEASE_VERSION}](https://github.com/${REPOSITORY}/releases/tag/v${RELEASE_VERSION})"
+            echo ""
+            echo "**Nested module tags:** \`xzap/v${RELEASE_VERSION}\`"
           } >> "$GITHUB_STEP_SUMMARY"

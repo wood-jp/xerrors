@@ -5,7 +5,6 @@
 [![CI](https://github.com/wood-jp/xerrors/actions/workflows/ci.yml/badge.svg)](https://github.com/wood-jp/xerrors/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/wood-jp/xerrors/badge.svg?branch=main)](https://coveralls.io/github/wood-jp/xerrors?branch=main)
 [![Release](https://img.shields.io/github/v/release/wood-jp/xerrors)](https://github.com/wood-jp/xerrors/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/wood-jp/xerrors)](https://goreportcard.com/report/github.com/wood-jp/xerrors)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Go Reference](https://pkg.go.dev/badge/github.com/wood-jp/xerrors.svg)](https://pkg.go.dev/github.com/wood-jp/xerrors)
 <!-- /badges -->
@@ -93,6 +92,20 @@ logger.Error("request failed", xerrors.Log(err))
 ```
 
 Data types contribute to `error_detail` by implementing `slog.LogValuer` and returning a group value. The attrs in that group are merged directly into `error_detail`. Types that don't implement `slog.LogValuer`, or whose `LogValue` doesn't resolve to a group, fall back to a single `"data"` key. See sub-packages for examples.
+
+#### Zap
+
+zap users can use the separate `xzap` module, which keeps zap out of the core module's dependencies:
+
+```
+go get github.com/wood-jp/xerrors/xzap
+```
+
+```go
+logger.Error("request failed", xzap.Error(err))
+```
+
+It produces the same structure as `xerrors.Log`. `xzap` is versioned in lockstep with the core module.
 
 ### Edge cases
 
