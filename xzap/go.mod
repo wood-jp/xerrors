@@ -1,6 +1,6 @@
 module github.com/wood-jp/xerrors/xzap
 
-go 1.26.4
+go 1.26.9
 
 require (
 	github.com/wood-jp/xerrors v1.1.3
